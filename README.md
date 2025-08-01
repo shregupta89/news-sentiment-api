@@ -9,6 +9,8 @@ A FastAPI-based service that fetches news headlines for Indian stock symbols, pe
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
 - [API Documentation](#api-documentation)
+- [API Examples](#api-examples)
+- [Development & Debugging](#development--debugging)
 - [Configuration](#configuration)
 - [AI Tools Usage](#ai-tools-usage)
 - [Contributing](#contributing)
@@ -134,6 +136,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Fetches news headlines for a stock symbol and analyzes sentiment.
 
+![API Documentation](https://github.com/user-attachments/assets/62bc0c06-e4ea-475e-9d1e-3decd100f0c9)
+
 **Request:**
 ```json
 {
@@ -167,12 +171,52 @@ Fetches news headlines for a stock symbol and analyzes sentiment.
 
 **Status Codes:**
 - `200`: Success
-- `400`: Invalid request body
+- `400`: Invalid stock symbol
+- `404`: No news found
 - `422`: Validation error
 - `500`: Internal server error
 
 ### Interactive Documentation
 Visit http://localhost:8000/docs for Swagger UI documentation with interactive API testing.
+
+## 🧪 API Examples
+
+### Successful Response (Valid Symbol)
+When you provide a valid Indian stock symbol, the API returns news headlines with sentiment analysis:
+
+![Valid Symbol Response](https://github.com/user-attachments/assets/84020f9b-c809-4ab9-806c-db76b368430c)
+
+### Error Handling (Invalid Symbol)
+The API validates stock symbols and provides helpful error messages with suggestions:
+
+![Invalid Symbol Error](https://github.com/user-attachments/assets/75cefbd2-d551-4996-87ec-68beff8e149f)
+
+### Additional Endpoints
+
+**GET /valid-symbols** - Get all supported stock symbols:
+```bash
+curl "http://localhost:8000/valid-symbols"
+```
+
+**GET /news-sentiment/{symbol}** - Get cached data for a symbol:
+```bash
+curl "http://localhost:8000/news-sentiment/TCS"
+```
+
+## 🛠️ Development & Debugging
+
+### Backend Logs
+The application provides comprehensive logging for debugging and monitoring:
+
+![Backend Logs](https://github.com/user-attachments/assets/6f66665d-1746-454e-b440-35bc631ecc02)
+
+### Log Features:
+- ✅ **Symbol Validation**: Track validation success/failure
+- 📰 **News Fetching**: Monitor API calls and response status  
+- 🤖 **Sentiment Analysis**: Progress tracking for each headline
+- 💾 **Database Operations**: Cache hits/misses and data persistence
+- ⚡ **Performance**: Response times and error tracking
+- 🔍 **Request Tracing**: Complete request lifecycle visibility
 
 ## ⚙️ Configuration
 

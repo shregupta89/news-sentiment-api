@@ -1,9 +1,11 @@
 # app/services/sentiment_service.py
-import openai
+from openai import OpenAI
 from typing import Literal
 import sys
 import os
 import re
+from openai._exceptions import OpenAIError, AuthenticationError, RateLimitError, APIError
+from openai import AsyncOpenAI
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,8 +17,18 @@ SentimentType = Literal["positive", "negative", "neutral"]
 class SentimentService:
     def __init__(self):
         self.openai_api_key = settings.OPENAI_API_KEY
+        
+        # Debug: Check API key
+        print(f"🔑 API Key exists: {bool(self.openai_api_key)}")
         if self.openai_api_key:
-            openai.api_key = self.openai_api_key
+            print(f"🔑 API Key starts with: {self.openai_api_key[:10]}...")
+            print(f"🔑 API Key length: {len(self.openai_api_key)}")
+        else:
+            print("❌ No API key found!")
+            raise ValueError("OpenAI API key not found in settings.")
+        
+        # Initialize OpenAI client
+        self.client = AsyncOpenAI(api_key=self.openai_api_key, timeout=10.0)
         
     async def analyze_sentiment(self, headline: str) -> SentimentType:
         """
@@ -67,26 +79,25 @@ Response:"""
     async def _call_openai_api(self, prompt: str) -> str:
         """Call OpenAI API with error handling"""
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # Cost-effective model
+            
+
+            response = await self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
                 messages=[
-                    {
-                        "role": "user", 
-                        "content": prompt
-                    }
+                    {"role": "user", "content": prompt}
                 ],
-                max_tokens=10,  # We only need one word
-                temperature=0.1,  # Low temperature for consistent results
-                timeout=10  # 10 second timeout
+                max_tokens=10,
+                temperature=0.1,
+                timeout=10
             )
             
             return response.choices[0].message.content.strip().lower()
             
-        except openai.error.RateLimitError:
+        except RateLimitError:
             raise ValueError("OpenAI rate limit exceeded")
-        except openai.error.AuthenticationError:
+        except AuthenticationError:
             raise ValueError("Invalid OpenAI API key")
-        except openai.error.APIError as e:
+        except APIError as e:
             raise ValueError(f"OpenAI API error: {str(e)}")
         except Exception as e:
             raise ValueError(f"OpenAI request failed: {str(e)}")
@@ -180,3 +191,21 @@ class MockSentimentService:
             return "negative"
         else:
             return "neutral"
+if __name__ == "__main__":
+    import asyncio
+
+    async def main():
+        print("🔍 Testing OpenAI API connection...")
+        service = SentimentService()
+        is_working = await service.test_api_connection()
+        
+        if is_working:
+            print("✅ OpenAI API key is working!")
+        else:
+            print("❌ OpenAI API key is not working or invalid.")
+
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        print(f"❌ Unexpected error in main: {e}")
+

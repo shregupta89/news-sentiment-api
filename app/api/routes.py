@@ -52,13 +52,14 @@ async def get_news_sentiment(
         
         if cached_news:
             print(f"✅ Found cached data for {request.symbol}")
-            # Convert database headlines to response format
+            # Convert database headlines to response format (latest 3 only)
+            latest_headlines = cached_news.headlines[-3:] if len(cached_news.headlines) >= 3 else cached_news.headlines
             headlines = [
                 HeadlineWithSentiment(
                     title=headline["title"],
                     sentiment=headline["sentiment"]
                 )
-                for headline in cached_news.headlines
+                for headline in latest_headlines
             ]
             
             return NewsResponse(
@@ -78,11 +79,14 @@ async def get_news_sentiment(
                 detail=f"No recent news found for symbol: {request.symbol}"
             )
         
+        # Limit to latest 3 news articles
+        latest_articles = news_articles[-3:] if len(news_articles) >= 3 else news_articles
+        
         # Step 3: Analyze sentiment for each headline
-        print(f"🤖 Analyzing sentiment for {len(news_articles)} headlines")
+        print(f"🤖 Analyzing sentiment for {len(latest_articles)} headlines")
         headlines_with_sentiment = []
         
-        for article in news_articles:
+        for article in latest_articles:
             try:
                 sentiment = await sentiment_service.analyze_sentiment(article.title)
                 headlines_with_sentiment.append({
@@ -145,12 +149,14 @@ async def get_cached_news_sentiment(symbol: str, db: Session = Depends(get_db)):
                 detail=f"No cached data found for symbol: {symbol}"
             )
         
+        # Get latest 3 headlines only
+        latest_headlines = cached_news.headlines[-3:] if len(cached_news.headlines) >= 3 else cached_news.headlines
         headlines = [
             HeadlineWithSentiment(
                 title=headline["title"],
                 sentiment=headline["sentiment"]
             )
-            for headline in cached_news.headlines
+            for headline in latest_headlines
         ]
         
         return NewsResponse(

@@ -10,16 +10,27 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.database import get_db, get_cached_news, save_news_record
 from models.schemas import NewsRequest, NewsResponse, HeadlineWithSentiment
-from services.news_service import NewsService
-from services.sentiment_service import SentimentService
+from services.news_service import NewsService, MockNewsService
+from services.sentiment_service import SentimentService, MockSentimentService
 from utils.config import settings
 
 # Create router
 router = APIRouter()
 
-# Initialize services
-news_service = NewsService()
-sentiment_service = SentimentService()
+# Initialize services (with fallback to mock services)
+try:
+    if settings.RAPIDAPI_KEY and settings.OPENAI_API_KEY:
+        news_service = NewsService()
+        sentiment_service = SentimentService()
+        print("✅ Using live API services")
+    else:
+        news_service = MockNewsService()
+        sentiment_service = MockSentimentService()
+        print("🧪 Using mock services (add API keys to use live services)")
+except Exception as e:
+    print(f"⚠️ Error initializing services, falling back to mock: {e}")
+    news_service = MockNewsService()
+    sentiment_service = MockSentimentService()
 
 @router.post("/news-sentiment", response_model=NewsResponse)
 async def get_news_sentiment(
@@ -53,7 +64,8 @@ async def get_news_sentiment(
             return NewsResponse(
                 symbol=cached_news.symbol,
                 timestamp=cached_news.timestamp,
-                headlines=headlines
+                headlines=headlines,
+                overall_sentiment=cached_news.overall_sentiment or "neutral"
             )
         
         # Step 2: Fetch fresh news (cache miss)
@@ -104,7 +116,8 @@ async def get_news_sentiment(
         return NewsResponse(
             symbol=request.symbol,
             timestamp=timestamp,
-            headlines=response_headlines
+            headlines=response_headlines,
+            overall_sentiment=news_record.overall_sentiment or "neutral"
         )
         
     except HTTPException:
@@ -143,7 +156,8 @@ async def get_cached_news_sentiment(symbol: str, db: Session = Depends(get_db)):
         return NewsResponse(
             symbol=cached_news.symbol,
             timestamp=cached_news.timestamp,
-            headlines=headlines
+            headlines=headlines,
+            overall_sentiment=cached_news.overall_sentiment or "neutral"
         )
         
     except HTTPException:

@@ -19,13 +19,13 @@ class NewsService:
         
     async def fetch_news(self, symbol: str) -> List[NewsArticle]:
         """
-        Fetch news articles for a given Indian stock symbol using Google News API
+        Fetch latest news articles for a given Indian stock symbol using Google News API
         """
         if not self.rapidapi_key:
             raise ValueError("RAPIDAPI_KEY not found in environment variables")
         
-        # Search query specifically for Indian stock news
-        search_keyword = f"{symbol} stock India NSE BSE share price"
+        # Search query specifically for Indian stock news with recent keywords
+        search_keyword = f"{symbol} stock India latest news today NSE BSE"
         
         # Use the /search endpoint from Google News API
         url = f"https://{self.rapidapi_host}/search"
@@ -42,7 +42,7 @@ class NewsService:
         
         try:
             async with aiohttp.ClientSession() as session:
-                print(f"🌐 Calling Google News API for symbol: {symbol}")
+                print(f"🌐 Calling Google News API for LATEST news on symbol: {symbol}")
                 print(f"🔍 Search keyword: {search_keyword}")
                 
                 async with session.get(url, headers=headers, params=params) as response:
@@ -50,7 +50,9 @@ class NewsService:
                     
                     if response.status == 200:
                         data = await response.json()
-                        return self._parse_google_news_response(data, symbol)
+                        articles = self._parse_google_news_response(data, symbol)
+                        print(f"📰 Successfully fetched {len(articles)} latest articles for {symbol}")
+                        return articles
                     elif response.status == 401:
                         raise ValueError("Invalid RapidAPI key or subscription expired")
                     elif response.status == 429:
@@ -199,31 +201,31 @@ class NewsService:
             return False
 
 # Fallback/Mock service for testing without API key
-# class MockNewsService:
-#     """Mock news service for testing when API key is not available"""
+class MockNewsService:
+    """Mock news service for testing when API key is not available"""
     
-#     async def fetch_news(self, symbol: str) -> List[NewsArticle]:
-#         """Return mock news articles for testing"""
-#         mock_articles = [
-#             NewsArticle(
-#                 title=f"{symbol} reports strong quarterly growth in latest earnings",
-#                 url="https://example.com/news1",
-#                 published_date="2025-07-31T10:00:00Z",
-#                 source="Mock Financial Times"
-#             ),
-#             NewsArticle(
-#                 title=f"Market analysts upgrade {symbol} stock rating to buy",
-#                 url="https://example.com/news2", 
-#                 published_date="2025-07-31T08:30:00Z",
-#                 source="Mock Business Today"
-#             ),
-#             NewsArticle(
-#                 title=f"Tech sector volatility affects {symbol} trading volumes",
-#                 url="https://example.com/news3",
-#                 published_date="2025-07-31T07:15:00Z", 
-#                 source="Mock Economic Times"
-#             )
-#         ]
+    async def fetch_news(self, symbol: str) -> List[NewsArticle]:
+        """Return mock news articles for testing"""
+        mock_articles = [
+            NewsArticle(
+                title=f"{symbol} reports strong quarterly growth in latest earnings",
+                url="https://example.com/news1",
+                published_date="2025-07-31T10:00:00Z",
+                source="Mock Financial Times"
+            ),
+            NewsArticle(
+                title=f"Market analysts upgrade {symbol} stock rating to buy",
+                url="https://example.com/news2", 
+                published_date="2025-07-31T08:30:00Z",
+                source="Mock Business Today"
+            ),
+            NewsArticle(
+                title=f"Tech sector volatility affects {symbol} trading volumes",
+                url="https://example.com/news3",
+                published_date="2025-07-31T07:15:00Z", 
+                source="Mock Economic Times"
+            )
+        ]
         
-#         print(f"🧪 Using mock news service for {symbol}")
-#         return mock_articles[:settings.MAX_NEWS_ARTICLES]
+        print(f"🧪 Using mock news service for {symbol}")
+        return mock_articles[:settings.MAX_NEWS_ARTICLES]

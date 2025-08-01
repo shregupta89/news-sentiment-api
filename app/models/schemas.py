@@ -1,5 +1,5 @@
 # app/models/schemas.py
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 from typing import List
 from datetime import datetime
 
@@ -7,8 +7,7 @@ from datetime import datetime
 class NewsRequest(BaseModel):
     symbol: str = Field(..., description="Stock symbol (e.g., TCS, INFY)")
     
-    @field_validator('symbol')
-    @classmethod
+    @validator('symbol')
     def validate_symbol(cls, v):
         if not v or len(v.strip()) == 0:
             raise ValueError('Symbol cannot be empty')
@@ -24,6 +23,7 @@ class NewsResponse(BaseModel):
     symbol: str = Field(..., description="Stock symbol")
     timestamp: datetime = Field(..., description="Timestamp when data was fetched")
     headlines: List[HeadlineWithSentiment] = Field(..., description="List of headlines with sentiment")
+    overall_sentiment: str = Field(..., description="Overall sentiment based on majority vote")
     
     class Config:
         # This allows the model to work with SQLAlchemy objects
@@ -42,7 +42,8 @@ class NewsResponse(BaseModel):
                         "title": "IT sector faces macro uncertainty", 
                         "sentiment": "negative"
                     }
-                ]
+                ],
+                "overall_sentiment": "positive"
             }
         }
 
@@ -70,9 +71,3 @@ class NewsRecordDB(BaseModel):
     
     class Config:
         from_attributes = True
-
-# What is Pydantic Schema?
-# Pydantic schemas are data validation and documentation models that define:
-# What data comes INTO your API (requests)
-# What data goes OUT of your API (responses)
-# How to validate and convert that data

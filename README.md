@@ -1,4 +1,4 @@
-# 🧪 News Sentiment API - Diversifi Backend Assignment
+# 🧪 News Sentiment API
 
 A FastAPI-based service that fetches news headlines for Indian stock symbols, performs sentiment analysis using OpenAI's GPT-3.5 Turbo, and stores results in a PostgreSQL database with intelligent caching.
 

@@ -12,6 +12,7 @@ from models.database import get_db, get_cached_news, save_news_record, uct_now
 from models.schemas import NewsRequest, NewsResponse, HeadlineWithSentiment
 from services.news_service import NewsService, MockNewsService
 from services.sentiment_service import SentimentService, MockSentimentService
+from services.validation_service import stock_validator  # ← NEW IMPORT
 from utils.config import settings
 
 # Create router
@@ -46,12 +47,42 @@ async def get_news_sentiment(
     """
     
     try:
+        # ====== NEW VALIDATION STEP ======
+        # Step 0: Validate stock symbol before processing
+        print(f"🔍 Validating stock symbol: {request.symbol}")
+        
+        if not stock_validator.is_valid_symbol(request.symbol):
+            # Get stock info for better error message
+            stock_info = stock_validator.get_stock_info(request.symbol)
+            suggestions = stock_validator.get_suggestions(request.symbol, limit=3)
+            
+            error_detail = {
+                "error": "Invalid stock symbol",
+                "message": f"'{request.symbol}' is not a valid NSE/BSE listed company symbol",
+                "provided_symbol": request.symbol
+            }
+            
+            # Add suggestions if we found any
+            if suggestions:
+                error_detail["suggestions"] = [
+                    f"{s['symbol']} ({s['name']})" for s in suggestions
+                ]
+            else:
+                error_detail["example_valid_symbols"] = ["TCS", "RELIANCE", "INFY", "HDFCBANK"]
+            
+            raise HTTPException(status_code=400, detail=error_detail)
+        
+        # Format the symbol properly (uppercase, trimmed)
+        validated_symbol = stock_validator.validate_and_format_symbol(request.symbol)
+        print(f"✅ Symbol validated: {validated_symbol}")
+        # ====== END VALIDATION STEP ======
+        
         # Step 1: Check cache first (10-minute rule)
-        print(f"🔍 Checking cache for symbol: {request.symbol}")
-        cached_news = get_cached_news(db, request.symbol, settings.CACHE_EXPIRY_MINUTES)
+        print(f"🔍 Checking cache for symbol: {validated_symbol}")
+        cached_news = get_cached_news(db, validated_symbol, settings.CACHE_EXPIRY_MINUTES)
         
         if cached_news:
-            print(f"✅ Found cached data for {request.symbol}")
+            print(f"✅ Found cached data for {validated_symbol}")
             # Convert database headlines to response format (latest 3 only)
             latest_headlines = cached_news.headlines[-3:] if len(cached_news.headlines) >= 3 else cached_news.headlines
             headlines = [
@@ -70,13 +101,18 @@ async def get_news_sentiment(
             )
         
         # Step 2: Fetch fresh news (cache miss)
-        print(f"📰 Fetching fresh news for {request.symbol}")
-        news_articles = await news_service.fetch_news(request.symbol)
+        print(f"📰 Fetching fresh news for {validated_symbol}")
+        news_articles = await news_service.fetch_news(validated_symbol)
         
         if not news_articles:
+            # Since symbol is valid, this is just no news found
             raise HTTPException(
                 status_code=404, 
-                detail=f"No recent news found for symbol: {request.symbol}"
+                detail={
+                    "error": "No news found",
+                    "message": f"No recent news found for {validated_symbol}. This is a valid stock symbol but no recent news articles are available.",
+                    "symbol": validated_symbol
+                }
             )
         
         # Limit to latest 3 news articles
@@ -105,7 +141,7 @@ async def get_news_sentiment(
         # Step 4: Save to database
         print(f"💾 Saving results to database")
         timestamp = uct_now()  # Use timezone-aware ist datetime
-        news_record = save_news_record(db, request.symbol, headlines_with_sentiment)
+        news_record = save_news_record(db, validated_symbol, headlines_with_sentiment)
         
         # Step 5: Format response
         response_headlines = [
@@ -116,9 +152,9 @@ async def get_news_sentiment(
             for headline in headlines_with_sentiment
         ]
         
-        print(f"🎉 Successfully processed {request.symbol}")
+        print(f"🎉 Successfully processed {validated_symbol}")
         return NewsResponse(
-            symbol=request.symbol,
+            symbol=validated_symbol,
             timestamp=timestamp,
             headlines=response_headlines,
             overall_sentiment=news_record.overall_sentiment or "neutral"
@@ -141,12 +177,31 @@ async def get_cached_news_sentiment(symbol: str, db: Session = Depends(get_db)):
     This is a GET endpoint for convenience.
     """
     try:
-        cached_news = get_cached_news(db, symbol, cache_minutes=60)  # Check last hour
+        # ====== VALIDATION FOR GET ENDPOINT TOO ======
+        if not stock_validator.is_valid_symbol(symbol):
+            suggestions = stock_validator.get_suggestions(symbol, limit=3)
+            error_detail = {
+                "error": "Invalid stock symbol",
+                "message": f"'{symbol}' is not a valid NSE/BSE listed company symbol",
+                "provided_symbol": symbol
+            }
+            
+            if suggestions:
+                error_detail["suggestions"] = [
+                    f"{s['symbol']} ({s['name']})" for s in suggestions
+                ]
+            
+            raise HTTPException(status_code=400, detail=error_detail)
+        
+        validated_symbol = stock_validator.validate_and_format_symbol(symbol)
+        # ====== END VALIDATION ======
+        
+        cached_news = get_cached_news(db, validated_symbol, cache_minutes=60)  # Check last hour
         
         if not cached_news:
             raise HTTPException(
                 status_code=404,
-                detail=f"No cached data found for symbol: {symbol}"
+                detail=f"No cached data found for symbol: {validated_symbol}"
             )
         
         # Get latest 3 headlines only
@@ -172,4 +227,23 @@ async def get_cached_news_sentiment(symbol: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Error retrieving cached data: {str(e)}"
+        )
+
+# ====== NEW ENDPOINT: Get Valid Symbols ======
+@router.get("/valid-symbols")
+async def get_valid_symbols():
+    """
+    Get list of all valid stock symbols for reference.
+    Useful for frontend dropdown or validation.
+    """
+    try:
+        return {
+            "valid_symbols": stock_validator.valid_stocks,
+            "total_count": len(stock_validator.valid_stocks),
+            "message": "List of supported Indian stock symbols"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving valid symbols: {str(e)}"
         )

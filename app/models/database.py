@@ -1,11 +1,11 @@
 # app/models/database.py
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Text,text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 import os
-
+from zoneinfo import ZoneInfo
 # Add parent directory to path to import config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.config import settings
@@ -22,17 +22,25 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create Base class for database models
 Base = declarative_base()
 
+# Helper function for UTC datetime
+def uct_now():
+    """Get current UTC datetime with timezone awareness"""
+    return datetime.now(timezone.utc)
+# def uct_now():
+#     return datetime.now(ZoneInfo("Asia/Kolkata"))
+
+
 # Database Models
 class NewsRecord(Base):
     __tablename__ = "news_records"
     
     id = Column(Integer, primary_key=True, index=True)
     symbol = Column(String(10), index=True, nullable=False, unique=True)  # Make symbol unique
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=uct_now, nullable=False)
     headlines = Column(JSON, nullable=False)  # Store array of {title, sentiment} objects
     overall_sentiment = Column(String(20), nullable=True)  # majority vote: positive, negative, neutral
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=uct_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=uct_now, onupdate=uct_now, nullable=False)
 
 # Database dependency for FastAPI
 def get_db():
@@ -72,9 +80,10 @@ def get_cached_news(db, symbol: str, cache_minutes: int = 10):
     Get cached news for a symbol if it exists within cache time.
     Since symbol is now unique, we just check if it was updated recently.
     """
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     
-    cache_time = datetime.utcnow() - timedelta(minutes=cache_minutes)
+    # timedelta represents a duration — a difference between two datetime values.
+    cache_time = uct_now() - timedelta(minutes=cache_minutes)
     
     # Find the record for this symbol
     cached_record = db.query(NewsRecord).filter(NewsRecord.symbol == symbol.upper()).first()
@@ -97,7 +106,7 @@ def save_news_record(db, symbol: str, headlines: list):
     """
     try:
         symbol = symbol.upper()
-        current_time = datetime.utcnow()
+        current_time = uct_now()
         
         # Check if record already exists
         existing_record = db.query(NewsRecord).filter(NewsRecord.symbol == symbol).first()

@@ -1,14 +1,14 @@
 # app/api/routes.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.database import get_db, get_cached_news, save_news_record
+from models.database import get_db, get_cached_news, save_news_record, uct_now
 from models.schemas import NewsRequest, NewsResponse, HeadlineWithSentiment
 from services.news_service import NewsService, MockNewsService
 from services.sentiment_service import SentimentService, MockSentimentService
@@ -100,7 +100,7 @@ async def get_news_sentiment(
         
         # Step 4: Save to database
         print(f"💾 Saving results to database")
-        timestamp = datetime.utcnow()
+        timestamp = uct_now()  # Use timezone-aware ist datetime
         news_record = save_news_record(db, request.symbol, headlines_with_sentiment)
         
         # Step 5: Format response

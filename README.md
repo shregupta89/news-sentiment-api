@@ -180,7 +180,7 @@ Fetches news headlines for a stock symbol and analyzes sentiment.
 ### Interactive Documentation
 Visit http://localhost:8000/docs for Swagger UI documentation with interactive API testing.
 
-## 🧪 API Examples
+##  API Examples
 
 ### Successful Response (Valid Symbol)
 When you provide a valid Indian stock symbol, the API returns news headlines with sentiment analysis:
@@ -204,7 +204,7 @@ curl "http://localhost:8000/valid-symbols"
 curl "http://localhost:8000/news-sentiment/TCS"
 ```
 
-## 🛠️ Development & Debugging
+## Development & Debugging
 
 ### Backend Logs
 The application provides comprehensive logging for debugging and monitoring:
@@ -298,7 +298,7 @@ Consider the impact on stock price and investor sentiment.
 - Pre-configured with database and credentials
 - Accessible on port 5432
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

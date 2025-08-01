@@ -136,7 +136,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Fetches news headlines for a stock symbol and analyzes sentiment.
 
-![API Documentation](https://github.com/user-attachments/assets/62bc0c06-e4ea-475e-9d1e-3decd100f0c9)
+![API Documentation](https://github.com/user-attachments/assets/6f66665d-1746-454e-b440-35bc631ecc02)
+
 
 **Request:**
 ```json
@@ -184,12 +185,12 @@ Visit http://localhost:8000/docs for Swagger UI documentation with interactive A
 ### Successful Response (Valid Symbol)
 When you provide a valid Indian stock symbol, the API returns news headlines with sentiment analysis:
 
-![Valid Symbol Response](https://github.com/user-attachments/assets/84020f9b-c809-4ab9-806c-db76b368430c)
+![Valid Symbol Response](https://github.com/user-attachments/assets/75cefbd2-d551-4996-87ec-68beff8e149f)
 
 ### Error Handling (Invalid Symbol)
 The API validates stock symbols and provides helpful error messages with suggestions:
 
-![Invalid Symbol Error](https://github.com/user-attachments/assets/75cefbd2-d551-4996-87ec-68beff8e149f)
+![Invalid Symbol Error](https://github.com/user-attachments/assets/62bc0c06-e4ea-475e-9d1e-3decd100f0c9)
 
 ### Additional Endpoints
 
@@ -208,7 +209,7 @@ curl "http://localhost:8000/news-sentiment/TCS"
 ### Backend Logs
 The application provides comprehensive logging for debugging and monitoring:
 
-![Backend Logs](https://github.com/user-attachments/assets/6f66665d-1746-454e-b440-35bc631ecc02)
+![Backend Logs](https://github.com/user-attachments/assets/84020f9b-c809-4ab9-806c-db76b368430c)
 
 ### Log Features:
 - ✅ **Symbol Validation**: Track validation success/failure

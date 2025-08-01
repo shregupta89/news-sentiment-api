@@ -1,8 +1,8 @@
-# 🧪 News Sentiment API
+#  News Sentiment API
 
 A FastAPI-based service that fetches news headlines for Indian stock symbols, performs sentiment analysis using OpenAI's GPT-3.5 Turbo, and stores results in a PostgreSQL database with intelligent caching.
 
-## 📋 Table of Contents
+## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -15,7 +15,7 @@ A FastAPI-based service that fetches news headlines for Indian stock symbols, pe
 - [AI Tools Usage](#ai-tools-usage)
 - [Contributing](#contributing)
 
-## 🎯 Overview
+## Overview
 
 This API accepts a stock symbol, fetches 2-3 recent news headlines, analyzes their sentiment, and returns a comprehensive sentiment summary. The service implements intelligent caching to avoid redundant API calls within a 10-minute window.
 
@@ -27,7 +27,7 @@ This API accepts a stock symbol, fetches 2-3 recent news headlines, analyzes the
 - ✅ RESTful API with FastAPI
 - ✅ Comprehensive error handling and logging
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -39,7 +39,7 @@ This API accepts a stock symbol, fetches 2-3 recent news headlines, analyzes the
 | **ORM** | SQLAlchemy |
 | **Validation** | Pydantic |
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 news-sentiment-api/
@@ -75,7 +75,7 @@ news-sentiment-api/
 │       └── config.py             # Configuration management
 ```
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### Prerequisites
 - Docker and Docker Compose installed

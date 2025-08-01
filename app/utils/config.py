@@ -11,7 +11,7 @@ class Settings:
     
     # RapidAPI Configuration
     RAPIDAPI_KEY: str = os.getenv("RAPIDAPI_KEY", "")
-    RAPIDAPI_HOST: str = os.getenv("RAPIDAPI_HOST", "bing-news-search1.p.rapidapi.com")
+    RAPIDAPI_HOST: str = os.getenv("RAPIDAPI_HOST", "google-news13.p.rapidapi.com")
     
     # OpenAI Configuration
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
